@@ -78,21 +78,9 @@ unit RAB_SmashSplitter_Part1;
 		Int_SigsInThisQL := 0;
 	end;
 
-	function Quickloader_Finish(): null;
+	function Create_plugin(): null;
 	begin
-
-		// Display something to the screen:
-			AddMessage( ' ' );
-			AddMessage('-----------------------------------------------------------');
-			AddMessage( ' ' );
-			AddMessage( 'Finished calculating Quickloader' + IntToStr(Int_CurrentQL) );
-			AddMessage( ' ' );
-			AddMessage( IntToStr(Int_SigsInThisQL) + ' sigs: ' + Arr_SigsInQL[Int_CurrentQL]);
-			AddMessage( ' ' );
-			AddMessage( IntToStr(Int_FilesInThisQL) + ' files: ' + Arr_FilesInQL[Int_CurrentQL]);
-			AddMessage( ' ' );
-
-		// Create the file:
+        // Create the file:
 			AddMessage('Creating QuickLoader plugin...');
             File_CurrentQL := FileByName('SmashSplitQL' + IntToStr(Int_CurrentQL) + '.esp');
 
@@ -118,8 +106,27 @@ unit RAB_SmashSplitter_Part1;
 		// Set the description:
 			AddMessage( 'Setting description...' );
 			Entry_Decription := Add(ElementByIndex(File_CurrentQL,0), 'SNAM', false);
+			if Arr_SigsInQL.Count <= Int_CurrentQL then
+                Arr_SigsInQL.Add('');
 			SetEditValue(Entry_Decription, 'SmashSplitQuickLoader:' + Arr_SigsInQL[Int_CurrentQL]);
 			AddMessage( ' ' );
+	end;
+
+	function Quickloader_Finish(): null;
+	begin
+
+		// Display something to the screen:
+			AddMessage( ' ' );
+			AddMessage('-----------------------------------------------------------');
+			AddMessage( ' ' );
+			AddMessage( 'Finished calculating Quickloader' + IntToStr(Int_CurrentQL) );
+			AddMessage( ' ' );
+			AddMessage( IntToStr(Int_SigsInThisQL) + ' sigs: ' + Arr_SigsInQL[Int_CurrentQL]);
+			AddMessage( ' ' );
+			AddMessage( IntToStr(Int_FilesInThisQL) + ' files: ' + Arr_FilesInQL[Int_CurrentQL]);
+			AddMessage( ' ' );
+
+		Create_Plugin();
 
 		// Add the masters:
 			AddMessage( 'Adding ' + IntToStr(Int_FilesInThisQL) + ' files as masters...' );
@@ -127,30 +134,20 @@ unit RAB_SmashSplitter_Part1;
 			Arr_AddAllMasters.Delimiter := ';';
 			Arr_AddAllMasters.StrictDelimiter := True;
 			Arr_AddAllMasters.DelimitedText := Arr_FilesInQL[Int_CurrentQL];
-			// for Int_LoopMasters := 0 to Pred(Arr_AddAllMasters.Count) do begin
-			// 	if Arr_AddAllMasters[Int_LoopMasters] <> '' then
-			// 		AddMasterIfMissing(File_CurrentQL,Arr_AddAllMasters[Int_LoopMasters]);
-			// end;
-			// AddMessage( ' ' );
-
-			// Iterate over all masters in Arr_AddAllMasters
-              for Int_LoopMasters := 0 to Length(Arr_AddAllMasters) - 1 do
-              begin
-                // Check if adding this will exceed the master list limit
-                if GetMasterCount(File_CurrentQL) >= 253 then
-                begin
-                  // Finish current QuickLoader and prepare a new one
-                  Quickloader_StartNext();
-
-                  AddMessage('Exceeded master limit, starting new QuickLoader.');
-
-                  // Update File_CurrentQL to the new File
-                  File_CurrentQL := GetNewQuickLoaderFile();
-                end;
-
-                // Add master if there's room
-                AddMasterIfMissing(File_CurrentQL, Arr_AddAllMasters[Int_LoopMasters]);
-              end;
+			for Int_LoopMasters := 0 to Pred(Arr_AddAllMasters.Count) do begin
+				if Arr_AddAllMasters[Int_LoopMasters] <> '' then
+				begin
+				    // Before adding each master, check the current master count
+                    if MasterCount(File_CurrentQL) >= 253 then
+                    begin
+                        AddMessage('Master limit of 253 reached. Rolling over to a new QuickLoader file...');
+                        Int_CurrentQL := Int_CurrentQL+1;
+                        Create_Plugin();
+                    end;
+				end;
+					AddMasterIfMissing(File_CurrentQL,Arr_AddAllMasters[Int_LoopMasters]);
+			end;
+			AddMessage( ' ' );
 
 
 		// Display something to the screen:
@@ -158,7 +155,6 @@ unit RAB_SmashSplitter_Part1;
 			AddMessage( ' ' );
 			AddMessage('-----------------------------------------------------------');
 			AddMessage( ' ' );
-
 	end;
 
 	function GetBestNextSig(): null; begin
