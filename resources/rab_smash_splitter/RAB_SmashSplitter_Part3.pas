@@ -23,26 +23,42 @@ unit RAB_SmashSplitter_Part3;
       InitSigs();
 
     // Iterate all files:
-      for Int_Loop_FindQLs := 0 to 9999 do begin
-
-        // No more QLs to find? Break!
+        for Int_Loop_FindQLs := 0 to 9999 do
+        begin
+          // Attempt to find the file
           obj_ThisQL := FileByName('SmashSplitQL' + IntToStr(Int_Loop_FindQLs) + '.esp');
-          if GetLoadOrder(obj_ThisQL) < 0 then break;
 
-          AddMessage( 'Found ' + GetFileName(obj_ThisQL) + ' ... trimming unwanted record types from associated Smashed Patch...' );
-          str_ThisFileDecription := GetElementNativeValues(ElementByIndex(obj_ThisQL,0),'SNAM');
+          // Validate the file exists
+          if not Assigned(obj_ThisQL) then
+          begin
+            AddMessage('No more QuickLoader files found. Stopping iteration.');
+            break;
+          end;
 
-          // Iterate sigs in this SmashedPatch:
-            obj_ThisSmashPatch := FileByName('Smashed Patch ' + IntToStr(Int_Loop_FindQLs) + '.esp');
-            for Int_Loop_Sigs := 0 to Pred(Arr_Sigs.Count) do begin
-              if (Assigned(GroupBySignature(obj_ThisSmashPatch,Arr_Sigs[Int_Loop_Sigs]))) and (Pos(Arr_Sigs[Int_Loop_Sigs],str_ThisFileDecription)<1) then begin
-                AddMessage( '   SmashedPatch' + IntToStr(Int_Loop_FindQLs) + ' has unwanted sig group ' + Arr_Sigs[Int_Loop_Sigs] + '... deleting!' );
-                RemoveNode( GroupBySignature(obj_ThisSmashPatch,Arr_Sigs[Int_Loop_Sigs]) );
-              end;
+          // Validate the load order
+          if GetLoadOrder(obj_ThisQL) < 0 then
+          begin
+            AddMessage('Invalid QuickLoader file. Stopping iteration.');
+            break;
+          end;
+
+          AddMessage('Found ' + GetFileName(obj_ThisQL) + ' ... trimming unwanted record types from associated Smashed Patch...');
+          str_ThisFileDecription := GetElementNativeValues(ElementByIndex(obj_ThisQL, 0), 'SNAM');
+
+          // Iterate sigs in this Smashed Patch:
+          obj_ThisSmashPatch := FileByName('Smashed Patch ' + IntToStr(Int_Loop_FindQLs) + '.esp');
+          for Int_Loop_Sigs := 0 to Pred(Arr_Sigs.Count) do
+          begin
+            if (Assigned(GroupBySignature(obj_ThisSmashPatch, Arr_Sigs[Int_Loop_Sigs]))) and
+               (Pos(Arr_Sigs[Int_Loop_Sigs], str_ThisFileDecription) < 1) then
+            begin
+              AddMessage('   Smashed Patch ' + IntToStr(Int_Loop_FindQLs) + ' has unwanted sig group ' + Arr_Sigs[Int_Loop_Sigs] + '... deleting!');
+              RemoveNode(GroupBySignature(obj_ThisSmashPatch, Arr_Sigs[Int_Loop_Sigs]));
             end;
-            CleanMasters(obj_ThisSmashPatch);
+          end;
 
-      end;
+          CleanMasters(obj_ThisSmashPatch);
+        end;
 
     // Finale message:
       AddMessage( ' ' );
