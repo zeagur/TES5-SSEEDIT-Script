@@ -49,7 +49,7 @@ Usage varies for each script. Detailed documentation for each script can be foun
 
 Here is a list of some scripts available in this repository:
 
-- `RAB_SmashSplitter_Part1`: Brief description of what this script does.
+- `RAB_SmashSplitter_Part1`: a helper to make a helper esp to choose which mods to make a smash patch from.
 - more in the future if I stumbled into any dead script that I want to use in my Skyrim game.
 
 Continually check back for new scripts and updates!
